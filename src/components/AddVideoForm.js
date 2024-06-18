@@ -52,7 +52,7 @@ const AddVideoForm = ({ onClose }) => {
                     <Option value="cancel">Cancel</Option>
                 </Select>
             </Form.Item>
-            <Form.Item name="price" label="Price" rules={[{ required: true }]}>
+            <Form.Item name="price" label="Creators Price" rules={[{ required: true }]}>
                 <Input type="number" />
             </Form.Item>
             <Form.Item name="remarks" label="Remarks">
