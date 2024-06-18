@@ -55,7 +55,7 @@ const AddVideoForm = ({ onClose }) => {
             <Form.Item name="price" label="Creators Price" rules={[{ required: true }]}>
                 <Input type="number" />
             </Form.Item>
-            <Form.Item name="remarks" label="Remarks">
+            <Form.Item name="remarks" label="Brand Price">
                 <Input />
             </Form.Item>
             <Form.Item name="brand" label="Brand" rules={[{ required: true }]}>
