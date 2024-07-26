@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, Button, Badge, Spin } from 'antd';
+import { Layout, Menu, Button, Badge, Spin, Drawer } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,16 +8,20 @@ import {
     TeamOutlined,
     UserOutlined,
     LogoutOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    MenuOutlined
 } from '@ant-design/icons';
 
-const { Header, Content, Footer } = Layout;
+const { Header, Content } = Layout;
 
 const AppLayout = ({ children }) => {
     const { user, role, loading, logout } = useAuth();
     const navigate = useNavigate();
     const [deletionRequestCount, setDeletionRequestCount] = useState(0);
     const [approvalRequestCount, setApprovalRequestCount] = useState(0);
+    const [paymentRequestCount, setPaymentRequestCount] = useState(0);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
     useEffect(() => {
         if (role === 'admin') {
@@ -29,45 +33,97 @@ const AppLayout = ({ children }) => {
                 setApprovalRequestCount(snapshot.size);
             });
 
+            const unsubscribePaymentRequests = db.collection('videos').where('payment', '==', 'pending').onSnapshot((snapshot) => {
+                setPaymentRequestCount(snapshot.size);
+            });
+
             return () => {
                 unsubscribeDeletionRequests();
                 unsubscribeApprovalRequests();
+                unsubscribePaymentRequests();
             };
         }
     }, [role]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    const showDrawer = () => {
+        setIsDrawerVisible(true);
+    };
+
+    const closeDrawer = () => {
+        setIsDrawerVisible(false);
+    };
+
+    const handleMenuClick = (path) => {
+        navigate(path);
+        closeDrawer();
+    };
 
     if (loading) {
         return <Spin tip="Loading..." />;
     }
 
+    const menuItems = (
+        <>
+            <Menu.Item key="1" icon={<DashboardOutlined />} onClick={() => handleMenuClick('/dashboard')}>
+                Dashboard
+            </Menu.Item>
+            {role === 'admin' && (
+                <>
+                    <Menu.Item key="2" icon={<ExclamationCircleOutlined />} onClick={() => handleMenuClick('/deletion-requests')}>
+                        Deletion Requests <Badge count={deletionRequestCount} overflowCount={99} />
+                    </Menu.Item>
+                    <Menu.Item key="3" icon={<TeamOutlined />} onClick={() => handleMenuClick('/team')}>
+                        Team <Badge count={approvalRequestCount} overflowCount={99} />
+                    </Menu.Item>
+                    <Menu.Item key="6" icon={<TeamOutlined />} onClick={() => handleMenuClick('/payment')}>
+                        Payment <Badge count={paymentRequestCount} overflowCount={99} />
+                    </Menu.Item>
+                </>
+            )}
+            <Menu.Item key="4" icon={<UserOutlined />} onClick={() => handleMenuClick('/profile')}>
+                Profile
+            </Menu.Item>
+            <Menu.Item key="5" style={{ marginLeft: 'auto' }}>
+                <Button type="primary" icon={<LogoutOutlined />} onClick={logout} />
+            </Menu.Item>
+        </>
+    );
+
     return (
         <Layout className="layout">
             {user && (
                 <Header style={styles.header}>
-                    <div className="logo"/>
-                    {/*<div style={styles.logo}>CreatorsMela</div>*/}
-                    <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']} style={styles.menu}>
-                        <Menu.Item key="1" icon={<DashboardOutlined/>} onClick={() => navigate('/dashboard')}>
-                            Dashboard
-                        </Menu.Item>
-                        {role === 'admin' && (
-                            <>
-                                <Menu.Item key="2" icon={<ExclamationCircleOutlined/>}
-                                           onClick={() => navigate('/deletion-requests')}>
-                                    Deletion Requests <Badge count={deletionRequestCount} overflowCount={99}/>
-                                </Menu.Item>
-                                <Menu.Item key="3" icon={<TeamOutlined/>} onClick={() => navigate('/team')}>
-                                    Team <Badge count={approvalRequestCount} overflowCount={99}/>
-                                </Menu.Item>
-                            </>
-                        )}
-                        <Menu.Item key="4" icon={<UserOutlined/>} onClick={() => navigate('/profile')}>
-                            Profile
-                        </Menu.Item>
-                        <Menu.Item key="5" style={{marginLeft: 'auto'}}>
-                            <Button type="primary" icon={<LogoutOutlined/>} onClick={logout}/>
-                        </Menu.Item>
-                    </Menu>
+                    <div style={styles.logo}>CMDM</div>
+                    <Button
+                        type="primary"
+                        icon={<MenuOutlined />}
+                        onClick={showDrawer}
+                        style={isMobile ? styles.mobileMenuButton : { display: 'none' }}
+                    >
+                        <Badge count={approvalRequestCount + paymentRequestCount} overflowCount={99} />
+                    </Button>
+                    <div style={isMobile ? styles.mobileMenu : styles.desktopMenu}>
+                        <Menu
+                            theme="dark"
+                            mode={isMobile ? 'vertical' : 'horizontal'}
+                            defaultSelectedKeys={['1']}
+                            style={styles.menu}
+                        >
+                            {menuItems}
+                        </Menu>
+                    </div>
                 </Header>
             )}
             <Content style={styles.content}>
@@ -75,7 +131,22 @@ const AppLayout = ({ children }) => {
                     {children}
                 </div>
             </Content>
-            {/*<Footer style={styles.footer}>Creators Mela ©2024</Footer>*/}
+            <Drawer
+                title="Menu"
+                placement="left"
+                onClose={closeDrawer}
+                visible={isDrawerVisible}
+                style={isMobile ? styles.drawerMenu : null}
+            >
+                <Menu
+                    theme="light"
+                    mode="vertical"
+                    defaultSelectedKeys={['1']}
+                    onClick={() => setIsDrawerVisible(false)}
+                >
+                    {menuItems}
+                </Menu>
+            </Drawer>
         </Layout>
     );
 };
@@ -93,18 +164,37 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
     },
+    desktopMenu: {
+        display: 'flex',
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    mobileMenuButton: {
+        display: 'block',
+    },
+    mobileMenu: {
+        display: 'none',
+    },
     content: {
         padding: '0 20px',
         marginTop: '20px',
-    },
-    footer: {
-        textAlign: 'center',
     },
     logo: {
         color: '#fff',
         fontSize: '20px',
         fontWeight: 'bold',
-        padding: ' 2px',
+    },
+    drawerMenu: {
+        width: '100%',
+    },
+    '@media (max-width: 768px)': {
+        mobileMenu: {
+            display: 'flex',
+            flexDirection: 'column',
+        },
+        desktopMenu: {
+            display: 'none',
+        },
     },
 };
 

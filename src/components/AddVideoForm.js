@@ -28,6 +28,8 @@ const AddVideoForm = ({ onClose }) => {
                 date: values.date.format('YYYY-MM-DD'),
                 ownerUid: user.uid,
                 ownerEmail: user.email,
+                payment:'pending',
+                
             });
             form.resetFields();
             message.success('Video added successfully!');

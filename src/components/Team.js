@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Table, Button, message, Spin, Popconfirm, Input, Card } from 'antd';
-import { CheckOutlined, StopOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, message, Spin, Popconfirm, Input, Card, Tag } from 'antd';
+import { CheckOutlined, StopOutlined, ReloadOutlined, DeleteOutlined, SearchOutlined, MailOutlined } from '@ant-design/icons';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import firebase from 'firebase/compat/app';
@@ -104,7 +104,7 @@ const Team = () => {
                 <Button
                     type="primary"
                     onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-                    icon="search"
+                    icon={<SearchOutlined />}
                     size="small"
                     style={{ width: 90, marginRight: 8 }}
                 >
@@ -116,9 +116,7 @@ const Team = () => {
             </div>
         ),
         filterIcon: (filtered) => (
-            <span role="img" aria-label="filter" className="anticon anticon-search">
-                🔍
-            </span>
+            <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
         ),
         onFilter: (value, record) => record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
         onFilterDropdownVisibleChange: (visible) => {
@@ -140,43 +138,32 @@ const Team = () => {
         setSearchText('');
     };
 
-    const getStatusFilterProps = () => ({
-        filters: [
-            { text: 'Active', value: false },
-            { text: 'Suspended', value: true },
-        ],
-        onFilter: (value, record) => record.suspended === value,
-    });
-
-    const getRoleFilterProps = () => ({
-        filters: [
-            { text: 'Admin', value: 'admin' },
-            { text: 'Worker', value: 'worker' },
-            { text: 'New', value: 'new' },
-        ],
-        onFilter: (value, record) => record.role === value,
-    });
-
     const columns = [
         { title: 'Name', dataIndex: 'name', key: 'name', ...getColumnSearchProps('name') },
         { title: 'Email', dataIndex: 'email', key: 'email', ...getColumnSearchProps('email') },
         { title: 'Phone', dataIndex: 'phone', key: 'phone', ...getColumnSearchProps('phone') },
-        { title: 'Role', dataIndex: 'role', key: 'role', ...getRoleFilterProps() },
+        { title: 'Role', dataIndex: 'role', key: 'role' },
         { title: 'Videos Done', dataIndex: 'videoCount', key: 'videoCount' },
-        { title: 'Status', dataIndex: 'suspended', key: 'suspended', render: (text) => (text ? 'Suspended' : 'Active'), ...getStatusFilterProps() },
+        { title: 'Status', dataIndex: 'suspended', key: 'suspended', render: (text) => (text ? 'Suspended' : 'Active') },
         {
             title: 'Actions',
             key: 'actions',
             render: (text, record) => (
                 <>
                     {record.role === 'new' && (
-                        <Button type="link" icon={<CheckOutlined />} onClick={() => handleApprove(record.id)} />
+                        <Tag color="blue" onClick={() => handleApprove(record.id)} style={styles.actionTag}>
+                            Approve
+                        </Tag>
                     )}
                     {!record.suspended && record.role !== 'new' && (
-                        <Button type="link" icon={<StopOutlined />} onClick={() => handleSuspend(record.id)} />
+                        <Tag color="orange" onClick={() => handleSuspend(record.id)} style={styles.actionTag}>
+                            Suspend
+                        </Tag>
                     )}
                     {record.suspended && (
-                        <Button type="link" icon={<ReloadOutlined />} onClick={() => handleReactivate(record.id)} />
+                        <Tag color="green" onClick={() => handleReactivate(record.id)} style={styles.actionTag}>
+                            Reactivate
+                        </Tag>
                     )}
                     <Popconfirm
                         title="Are you sure delete this user?"
@@ -184,7 +171,7 @@ const Team = () => {
                         okText="Yes"
                         cancelText="No"
                     >
-                        <Button type="link" danger icon={<DeleteOutlined />} />
+                        <Tag color="red" style={styles.actionTag}>Delete</Tag>
                     </Popconfirm>
                 </>
             ),
@@ -210,13 +197,19 @@ const Team = () => {
                             <p><strong>Status:</strong> {user.suspended ? 'Suspended' : 'Active'}</p>
                             <div style={styles.cardActions}>
                                 {user.role === 'new' && (
-                                    <Button type="link" icon={<CheckOutlined />} onClick={() => handleApprove(user.id)} />
+                                    <Tag color="blue" onClick={() => handleApprove(user.id)} style={styles.actionTag}>
+                                        Approve
+                                    </Tag>
                                 )}
                                 {!user.suspended && user.role !== 'new' && (
-                                    <Button type="link" icon={<StopOutlined />} onClick={() => handleSuspend(user.id)} />
+                                    <Tag color="orange" onClick={() => handleSuspend(user.id)} style={styles.actionTag}>
+                                        Suspend
+                                    </Tag>
                                 )}
                                 {user.suspended && (
-                                    <Button type="link" icon={<ReloadOutlined />} onClick={() => handleReactivate(user.id)} />
+                                    <Tag color="green" onClick={() => handleReactivate(user.id)} style={styles.actionTag}>
+                                        Reactivate
+                                    </Tag>
                                 )}
                                 <Popconfirm
                                     title="Are you sure delete this user?"
@@ -224,7 +217,7 @@ const Team = () => {
                                     okText="Yes"
                                     cancelText="No"
                                 >
-                                    <Button type="link" danger icon={<DeleteOutlined />} />
+                                    <Tag color="red" style={styles.actionTag}>Delete</Tag>
                                 </Popconfirm>
                             </div>
                         </Card>
@@ -239,8 +232,7 @@ const Team = () => {
 
 const styles = {
     container: {
-        // padding: '20px',
-        // minHeight: 'calc(100vh - 134px)', // Adjusting for header and footer height
+     // Adjusting for header and footer height
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -256,6 +248,9 @@ const styles = {
     cardActions: {
         display: 'flex',
         justifyContent: 'space-between',
+    },
+    actionTag: {
+        cursor: 'pointer',
     },
 };
 

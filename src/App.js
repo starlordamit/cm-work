@@ -8,6 +8,7 @@ import AdminDeletionRequests from './components/AdminDeletionRequests';
 import Team from './components/Team';
 import Profile from './components/Profile';
 import AppLayout from './components/AppLayout';
+import AdminPaymentRequests from './components/AdminPaymentRequests';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Spin } from 'antd';
@@ -38,6 +39,8 @@ const App = () => {
                     <Route path="/deletion-requests" element={<PrivateRoute><AppLayout><AdminDeletionRequests /></AppLayout></PrivateRoute>} />
                     <Route path="/team" element={<PrivateRoute adminOnly><AppLayout><Team /></AppLayout></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><AppLayout><Profile /></AppLayout></PrivateRoute>} />
+                    <Route path="/payment" element={<PrivateRoute><AppLayout><AdminPaymentRequests /></AppLayout></PrivateRoute>} />
+
                     {/*<Route path="/user-approvals" element={<PrivateRoute adminOnly><AppLayout><AdminUserApproval /></AppLayout></PrivateRoute>}/>*/}
                 </Routes>
             </Router>
